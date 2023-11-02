@@ -14,7 +14,7 @@ local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port
 
 local test_parameters = {
     model = "zephyr",
-    prompt = "calculate distance in python using numpy",
+    prompt = "what does the pirate say?",
     -- stream = false,
 }
 
@@ -73,25 +73,49 @@ end
 local call = function()
     local exit_state_text = "Generation Complete"
 
-    popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
     popup:mount()
+    popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
+
+    local half_baked_cake = ""
 
     local job_id = vim.fn.jobstart(cmd, {
         on_stdout = function(_, data, _)
-            for _, json_str in ipairs(data) do
-                local ok, decoded = pcall(vim.json.decode, json_str)
-                if ok then append_str_to_end_of_buffer(popup.bufnr, decoded.response) end
+            for _, string_fragment in ipairs(data) do
+                half_baked_cake = half_baked_cake .. string_fragment
+
+                local ok, decoded = pcall(vim.json.decode, half_baked_cake)
+
+                if ok then
+                    half_baked_cake = ""
+
+                    if decoded.eval_count then
+                        local token_per_sec = decoded.eval_count
+                            / decoded.eval_duration -- nanoseconds
+                            * 1000000000
+                        exit_state_text = string.format(
+                            "Generated: %s tokens | Speed: %s tokens per second",
+                            decoded.eval_count,
+                            string.format("%.1f", token_per_sec)
+                        )
+                    end
+
+                    vim.schedule(
+                        function() append_str_to_end_of_buffer(popup.bufnr, decoded.response) end
+                    )
+                end
             end
         end,
-        on_exit = function()
-            -- TODO:
-            popup.border:set_text("bottom", exit_state_text)
-        end,
+        on_exit = function() popup.border:set_text("bottom", exit_state_text) end,
     })
 
     popup:map("n", "<Esc>", function()
         vim.fn.jobstop(job_id)
         exit_state_text = NuiText("User Interupted", "GruvboxRedBold")
+    end, {})
+
+    popup:map("n", "q", function()
+        vim.fn.jobstop(job_id)
+        popup:unmount()
     end, {})
 end
 
