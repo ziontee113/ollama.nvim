@@ -1,7 +1,7 @@
 -- imports
 
-local curl = require("plenary.curl")
 local Popup = require("nui.popup")
+local NuiText = require("nui.text")
 
 local M = {}
 
@@ -15,6 +15,7 @@ local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port
 local test_parameters = {
     model = "zephyr",
     prompt = "calculate distance in python using numpy",
+    -- stream = false,
 }
 
 local request_body = vim.json.encode(test_parameters)
@@ -70,6 +71,9 @@ local append_str_to_end_of_buffer = function(bufnr, str)
 end
 
 local call = function()
+    local exit_state_text = "Generation Complete"
+
+    popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
     popup:mount()
 
     local job_id = vim.fn.jobstart(cmd, {
@@ -81,8 +85,14 @@ local call = function()
         end,
         on_exit = function()
             -- TODO:
+            popup.border:set_text("bottom", exit_state_text)
         end,
     })
+
+    popup:map("n", "<Esc>", function()
+        vim.fn.jobstop(job_id)
+        exit_state_text = NuiText("User Interupted", "GruvboxRedBold")
+    end, {})
 end
 
 vim.keymap.set("n", "<A-p>", function() call() end, {})
