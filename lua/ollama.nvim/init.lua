@@ -40,7 +40,7 @@ local result_popup = Popup({
         text = {
             top = "Result",
             top_align = "center",
-            bottom = "I am bottom title",
+            bottom = "Standby",
             bottom_align = "left",
         },
     },
@@ -80,15 +80,14 @@ end
 -- main function
 
 local main = function()
-    ------------------------------------------------------------
-
     layout:mount()
-    result_popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
 
     local job
     local exit_state_text = "Generation Complete"
 
     local create_job = function(prompt)
+        result_popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
+
         local parameters = {
             model = "zephyr",
             prompt = prompt,
@@ -102,7 +101,6 @@ local main = function()
             args = { "-X", "POST", ollama_url, "-d", vim.json.encode(parameters) },
             on_stdout = function(_, data)
                 half_baked_cake = half_baked_cake .. data
-
                 local ok, decoded = pcall(vim.json.decode, half_baked_cake)
 
                 if ok then
@@ -130,48 +128,41 @@ local main = function()
         })
     end
 
-    prompt_popup:map("i", "<C-CR>", function()
-        local prompt =
-            table.concat(vim.api.nvim_buf_get_lines(prompt_popup.bufnr, 0, -1, false), "\n")
-        job = create_job(prompt)
-        job:start()
-    end, {})
-
-    prompt_popup:map("n", "<CR>", function()
-        local prompt =
-            table.concat(vim.api.nvim_buf_get_lines(prompt_popup.bufnr, 0, -1, false), "\n")
-        job = create_job(prompt)
-        job:start()
-    end, {})
-
-    prompt_popup:map(
-        "n",
-        "<Tab>",
-        function() vim.api.nvim_set_current_win(result_popup.winid) end,
-        {}
-    )
-
-    prompt_popup:map("n", "q", function()
-        job:shutdown()
+    -- shared popup functions
+    local close = function()
+        if job then job:shutdown() end
         layout:unmount()
-    end, {})
+    end
 
-    result_popup:map(
-        "n",
-        "<Tab>",
-        function() vim.api.nvim_set_current_win(prompt_popup.winid) end,
-        {}
-    )
+    -- prompt popup functions
+    local generate = function()
+        local prompt_popup_lines = vim.api.nvim_buf_get_lines(prompt_popup.bufnr, 0, -1, false)
+        local prompt = table.concat(prompt_popup_lines, "\n")
+        job = create_job(prompt)
+        job:start()
+    end
+    local switch_to_result_popup = function() vim.api.nvim_set_current_win(result_popup.winid) end
 
-    result_popup:map("n", "<Esc>", function()
+    -- result popup functions
+    local switch_to_prompt_popup = function() vim.api.nvim_set_current_win(prompt_popup.winid) end
+    local interupt = function()
         job:shutdown()
         exit_state_text = NuiText("User Interupted", "GruvboxRedBold")
-    end, {})
+    end
 
-    result_popup:map("n", "q", function()
-        job:shutdown()
-        layout:unmount()
+    -- prompt prompt mappings
+    prompt_popup:map("i", "<C-S>", function()
+        vim.api.nvim_input("<Esc>")
+        generate()
     end, {})
+    prompt_popup:map("n", "<CR>", generate, {})
+    prompt_popup:map("n", "<Tab>", switch_to_result_popup, {})
+    prompt_popup:map("n", "q", close, {})
+
+    -- result popup mappings
+    result_popup:map("n", "<Tab>", switch_to_prompt_popup, {})
+    result_popup:map("n", "<Esc>", interupt, {})
+    result_popup:map("n", "q", close, {})
 end
 
 vim.keymap.set("n", "<A-p>", function() main() end, {})
