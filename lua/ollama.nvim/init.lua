@@ -30,6 +30,9 @@ local prompt_popup = Popup({
             top = "Prompt",
         },
     },
+    buf_options = {
+        filetype = "ollama_prompt",
+    },
 })
 
 local result_popup = Popup({
@@ -158,6 +161,11 @@ local main = function()
         vim.api.nvim_input("<Esc>")
         generate()
     end, {})
+    prompt_popup:map("s", "<C-S>", function()
+        vim.api.nvim_input("<Esc>")
+        generate()
+    end, {})
+
     prompt_popup:map("n", "<CR>", generate, {})
     prompt_popup:map("n", "<Tab>", switch_to_result_popup, {})
     prompt_popup:map("n", "q", close, {})
