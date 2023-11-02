@@ -82,11 +82,14 @@ end
 local main = function()
     layout:mount()
 
+    vim.api.nvim_buf_call(prompt_popup.bufnr, function() vim.cmd("startinsert") end)
+
     local job
     local exit_state_text = "Generation Complete"
 
     local create_job = function(prompt)
         result_popup.border:set_text("bottom", NuiText("generating...", "@lsp.type.parameter"))
+        vim.api.nvim_buf_set_lines(result_popup.bufnr, 0, -1, false, {})
 
         local parameters = {
             model = "zephyr",
@@ -94,17 +97,17 @@ local main = function()
             -- stream = false,
         }
 
-        local half_baked_cake = ""
+        local pending_json_string = ""
 
         return Job:new({
             command = "curl",
             args = { "-X", "POST", ollama_url, "-d", vim.json.encode(parameters) },
             on_stdout = function(_, data)
-                half_baked_cake = half_baked_cake .. data
-                local ok, decoded = pcall(vim.json.decode, half_baked_cake)
+                pending_json_string = pending_json_string .. data
+                local ok, decoded = pcall(vim.json.decode, pending_json_string)
 
                 if ok then
-                    half_baked_cake = ""
+                    pending_json_string = ""
 
                     if decoded.eval_count then
                         local token_per_sec = decoded.eval_count
