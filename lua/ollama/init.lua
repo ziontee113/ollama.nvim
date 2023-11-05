@@ -4,7 +4,7 @@ local NuiText = require("nui.text")
 local Job = require("plenary.job")
 
 local lib_buf = require("ollama.lib.buffer")
-local lib_layout = require("ollama.lib.layout")
+local layout_create = require("ollama.layout.create")
 
 local M = {}
 
@@ -15,7 +15,7 @@ local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port
 
 -- main function
 
-local layout, prompt_popup, result_popup = lib_layout.create_default_layout()
+local layout, prompt_popup, result_popup = layout_create.create_default_layout()
 
 local main = function()
     layout:mount()
@@ -119,4 +119,3 @@ end
 vim.keymap.set("n", "<A-p>", function() main() end, {})
 
 return M
--- {{{nvim-execute-on-save}}}
