@@ -1,13 +1,11 @@
 local NuiText = require("nui.text")
 local Job = require("plenary.job")
+local curl = require("plenary.curl")
 
 local layout_create = require("ollama.layout.create")
 local lib_buf = require("ollama.lib.buffer")
 
--- handle this in seperate configuration file later
-local ollama_model = "zephyr"
-local ollama_port = 11434
-local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port)
+-- create OllamaLayout class --
 
 OllamaLayout = {}
 OllamaLayout.__index = OllamaLayout
@@ -19,6 +17,11 @@ function OllamaLayout.new()
     instance.layout = layout
     instance.prompt_popup = prompt_popup
     instance.result_popup = result_popup
+
+    instance.model = "zephyr"
+    instance.ollama_port = 11434
+    instance.ollama_url = string.format("http://localhost:%s/api/generate", instance.ollama_port)
+    instance.ollama_models_url = string.format("http://localhost:%s/api/tags", instance.ollama_port)
 
     instance:_map_prompt_popup_keys()
     instance:_map_result_popup_keys()
@@ -33,14 +36,41 @@ function OllamaLayout:_prepare_layout_for_generation()
     vim.api.nvim_win_set_cursor(self.result_popup.winid, { 1, 1 })
 end
 
+-- select model --
+
+function OllamaLayout:get_model_names()
+    local res = curl.get(self.ollama_models_url)
+    local decoded = vim.json.decode(res.body)
+
+    local models = decoded.models
+    local model_names = {}
+
+    for _, model in ipairs(models) do
+        table.insert(model_names, model.name)
+    end
+
+    return model_names
+end
+function OllamaLayout:select_model()
+    vim.ui.select(self:get_model_names(), {
+        prompt = "Select model:",
+    }, function(choice)
+        self.model = choice
+        self:_update_prompt_title(self.model)
+    end)
+end
+
+-- generation job --
+
 function OllamaLayout:_get_prompt()
     local prompt_popup_lines = vim.api.nvim_buf_get_lines(self.prompt_popup.bufnr, 0, -1, false)
     local prompt = table.concat(prompt_popup_lines, "\n")
     return prompt
 end
 function OllamaLayout:_create_generation_job(prompt)
+    -- refactor this
     local parameters = {
-        model = ollama_model,
+        model = self.model,
         prompt = prompt,
     }
 
@@ -48,7 +78,7 @@ function OllamaLayout:_create_generation_job(prompt)
 
     self.job = Job:new({
         command = "curl",
-        args = { "-X", "POST", ollama_url, "-d", vim.json.encode(parameters) },
+        args = { "-X", "POST", self.ollama_url, "-d", vim.json.encode(parameters) },
         on_stdout = function(_, data)
             pending_json_string = pending_json_string .. data
             local ok, decoded = pcall(vim.json.decode, pending_json_string)
@@ -78,32 +108,14 @@ function OllamaLayout:_append_result(str)
     vim.schedule(function() lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, str) end)
 end
 
+-- mapped methods --
+
 function OllamaLayout:generate()
     self:_prepare_layout_for_generation()
     local prompt = self:_get_prompt()
     self:_create_generation_job(prompt)
     self.job:start()
 end
-
-function OllamaLayout:mount()
-    self.mounted = true
-    self.layout:mount()
-    self:_update_result_popup_bottom_text("waiting for prompt...")
-    vim.api.nvim_buf_call(self.prompt_popup.bufnr, function() vim.cmd("startinsert") end)
-end
-
-function OllamaLayout:_update_result_popup_bottom_text(text)
-    vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
-end
-
-function OllamaLayout:show()
-    if not self.mounted then
-        self:mount()
-    else
-        self.layout:show()
-    end
-end
-function OllamaLayout:hide() self.layout:hide() end
 
 function OllamaLayout:interupt()
     if self.job then
@@ -122,6 +134,7 @@ function OllamaLayout:_map_prompt_popup_keys()
     popup:map("n", "<CR>", function() self:generate() end, {})
     popup:map("n", "<Tab>", function() self:switch_to_result_popup() end, {})
     popup:map("n", "q", function() self:hide() end, {})
+    popup:map("n", "m", function() self:select_model() end, {})
 end
 
 function OllamaLayout:_map_result_popup_keys()
@@ -129,6 +142,33 @@ function OllamaLayout:_map_result_popup_keys()
     popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
     popup:map("n", "<Esc>", function() self:interupt() end, {})
     popup:map("n", "q", function() self:hide() end, {})
+    popup:map("n", "m", function() self:select_model() end, {})
 end
+
+-- public methods --
+
+function OllamaLayout:mount()
+    self.mounted = true
+    self.layout:mount()
+    self:_update_result_popup_bottom_text("waiting for prompt...")
+    vim.api.nvim_buf_call(self.prompt_popup.bufnr, function() vim.cmd("startinsert") end)
+end
+
+function OllamaLayout:_update_result_popup_bottom_text(text)
+    vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
+end
+function OllamaLayout:_update_prompt_title(text)
+    vim.schedule(function() self.result_popup.border:set_text("top", text, "center") end)
+end
+
+function OllamaLayout:show()
+    if not self.mounted then
+        self:mount()
+    else
+        self.layout:show()
+    end
+end
+
+function OllamaLayout:hide() self.layout:hide() end
 
 return OllamaLayout
