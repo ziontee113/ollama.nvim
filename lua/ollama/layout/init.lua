@@ -131,6 +131,25 @@ function OllamaLayout:_append_result(str)
     vim.schedule(function() lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, str) end)
 end
 
+-- layout related methods --
+
+function OllamaLayout:_update_result_popup_bottom_text(text)
+    vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
+end
+function OllamaLayout:_update_prompt_title(text)
+    vim.schedule(function() self.result_popup.border:set_text("top", text, "center") end)
+end
+
+function OllamaLayout:toggle_layout()
+    local layout = self.layout
+    if active_layout == "default" then
+        active_layout = "big"
+    else
+        active_layout = "default"
+    end
+    layout:update(layout_map[active_layout])
+end
+
 -- mapped methods --
 
 function OllamaLayout:generate()
@@ -153,16 +172,6 @@ function OllamaLayout:switch_to_prompt_popup() vim.api.nvim_set_current_win(self
 function OllamaLayout:smap(mode, mapping, map_to, opts)
     self.prompt_popup:map(mode, mapping, map_to, opts or {})
     self.result_popup:map(mode, mapping, map_to, opts or {})
-end
-
-function OllamaLayout:toggle_layout()
-    local layout = self.layout
-    if active_layout == "default" then
-        active_layout = "big"
-    else
-        active_layout = "default"
-    end
-    layout:update(layout_map[active_layout])
 end
 
 -- mappings --
@@ -193,13 +202,6 @@ function OllamaLayout:mount()
     self.layout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
     vim.api.nvim_buf_call(self.prompt_popup.bufnr, function() vim.cmd("startinsert") end)
-end
-
-function OllamaLayout:_update_result_popup_bottom_text(text)
-    vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
-end
-function OllamaLayout:_update_prompt_title(text)
-    vim.schedule(function() self.result_popup.border:set_text("top", text, "center") end)
 end
 
 function OllamaLayout:show()
