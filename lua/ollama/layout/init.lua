@@ -5,6 +5,28 @@ local curl = require("plenary.curl")
 local layout_create = require("ollama.layout.create")
 local lib_buf = require("ollama.lib.buffer")
 
+-- refactor later --
+
+local active_layout = "default"
+local layout_map = {
+    default = {
+        relative = "editor",
+        position = "50%",
+        size = {
+            width = 80,
+            height = 48,
+        },
+    },
+    big = {
+        relative = "editor",
+        position = "50%",
+        size = {
+            width = "80%",
+            height = "80%",
+        },
+    },
+}
+
 -- create OllamaLayout class --
 
 OllamaLayout = {}
@@ -23,6 +45,7 @@ function OllamaLayout.new()
     instance.ollama_url = string.format("http://localhost:%s/api/generate", instance.ollama_port)
     instance.ollama_models_url = string.format("http://localhost:%s/api/tags", instance.ollama_port)
 
+    instance:_map_shared_keys()
     instance:_map_prompt_popup_keys()
     instance:_map_result_popup_keys()
 
@@ -127,22 +150,40 @@ end
 function OllamaLayout:switch_to_result_popup() vim.api.nvim_set_current_win(self.result_popup.winid) end
 function OllamaLayout:switch_to_prompt_popup() vim.api.nvim_set_current_win(self.prompt_popup.winid) end
 
+function OllamaLayout:smap(mode, mapping, map_to, opts)
+    self.prompt_popup:map(mode, mapping, map_to, opts or {})
+    self.result_popup:map(mode, mapping, map_to, opts or {})
+end
+
+function OllamaLayout:toggle_layout()
+    local layout = self.layout
+    if active_layout == "default" then
+        active_layout = "big"
+    else
+        active_layout = "default"
+    end
+    layout:update(layout_map[active_layout])
+end
+
+-- mappings --
+
+function OllamaLayout:_map_shared_keys()
+    self:smap("n", "<CR>", function() self:generate() end, {})
+    self:smap("n", "q", function() self:hide() end, {})
+    self:smap("n", "m", function() self:select_model() end, {})
+    self:smap("n", "<C-l>", function() self:toggle_layout() end, {})
+end
+
 function OllamaLayout:_map_prompt_popup_keys()
     local popup = self.prompt_popup
     popup:map("i", "<C-S>", function() self:generate() end, {})
     popup:map("s", "<C-S>", function() self:generate() end, {})
-    popup:map("n", "<CR>", function() self:generate() end, {})
     popup:map("n", "<Tab>", function() self:switch_to_result_popup() end, {})
-    popup:map("n", "q", function() self:hide() end, {})
-    popup:map("n", "m", function() self:select_model() end, {})
 end
 
 function OllamaLayout:_map_result_popup_keys()
     local popup = self.result_popup
     popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
-    popup:map("n", "<Esc>", function() self:interupt() end, {})
-    popup:map("n", "q", function() self:hide() end, {})
-    popup:map("n", "m", function() self:select_model() end, {})
 end
 
 -- public methods --
