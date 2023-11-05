@@ -26,14 +26,26 @@ function OllamaLayout.new()
     return instance
 end
 
-function OllamaLayout:generate()
+function OllamaLayout:_prepare_layout_for_generation()
     if vim.fn.mode() == "i" then vim.api.nvim_input("<Esc>") end
-
     self:_update_result_popup_bottom_text(NuiText("generating...", "GruvboxBlueSign"))
     vim.api.nvim_buf_set_lines(self.result_popup.bufnr, 0, -1, false, {})
+    vim.api.nvim_win_set_cursor(self.result_popup.winid, { 1, 1 })
+end
 
+function OllamaLayout:_get_prompt()
     local prompt_popup_lines = vim.api.nvim_buf_get_lines(self.prompt_popup.bufnr, 0, -1, false)
     local prompt = table.concat(prompt_popup_lines, "\n")
+    return prompt
+end
+
+function OllamaLayout:_append_result(str)
+    vim.schedule(function() lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, str) end)
+end
+
+function OllamaLayout:generate()
+    self:_prepare_layout_for_generation()
+    local prompt = self:_get_prompt()
 
     local parameters = {
         model = ollama_model,
@@ -56,21 +68,16 @@ function OllamaLayout:generate()
                     local token_per_sec = decoded.eval_count
                         / decoded.eval_duration -- nanoseconds
                         * 1000000000
-                    self.result_bottom_text = string.format(
+                    local updated_result_bottom_text = string.format(
                         "Generated: %s tokens | Speed: %s tokens per second",
                         decoded.eval_count,
                         string.format("%.1f", token_per_sec)
                     )
+
+                    self:_update_result_popup_bottom_text(updated_result_bottom_text)
                 end
 
-                vim.schedule(
-                    function()
-                        lib_buf.append_str_to_end_of_buffer(
-                            self.result_popup.bufnr,
-                            decoded.response
-                        )
-                    end
-                )
+                self:_append_result(decoded.response)
             end
         end,
     })
@@ -86,7 +93,7 @@ function OllamaLayout:mount()
 end
 
 function OllamaLayout:_update_result_popup_bottom_text(text)
-    self.result_popup.border:set_text("bottom", text)
+    vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
 end
 
 function OllamaLayout:show()
@@ -101,7 +108,7 @@ function OllamaLayout:hide() self.layout:hide() end
 function OllamaLayout:interupt()
     if self.job then
         self.job:shutdown()
-        self._update_result_popup_bottom_text(NuiText("User Interupted", "GruvboxRedBold"))
+        self:_update_result_popup_bottom_text(NuiText("User Interupted", "GruvboxRedBold"))
     end
 end
 
@@ -113,7 +120,7 @@ function OllamaLayout:_map_prompt_popup_keys()
     popup:map("i", "<C-S>", function() self:generate() end, {})
     popup:map("s", "<C-S>", function() self:generate() end, {})
     popup:map("n", "<CR>", function() self:generate() end, {})
-    popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
+    popup:map("n", "<Tab>", function() self:switch_to_result_popup() end, {})
     popup:map("n", "q", function() self:hide() end, {})
 end
 
