@@ -30,7 +30,7 @@ local main = function()
         vim.api.nvim_buf_set_lines(result_popup.bufnr, 0, -1, false, {})
 
         local parameters = {
-            model = "codellama",
+            model = "zephyr",
             prompt = prompt,
             -- stream = false,
         }
