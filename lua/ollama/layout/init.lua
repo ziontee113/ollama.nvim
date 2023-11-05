@@ -38,15 +38,7 @@ function OllamaLayout:_get_prompt()
     local prompt = table.concat(prompt_popup_lines, "\n")
     return prompt
 end
-
-function OllamaLayout:_append_result(str)
-    vim.schedule(function() lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, str) end)
-end
-
-function OllamaLayout:generate()
-    self:_prepare_layout_for_generation()
-    local prompt = self:_get_prompt()
-
+function OllamaLayout:_create_generation_job(prompt)
     local parameters = {
         model = ollama_model,
         prompt = prompt,
@@ -81,7 +73,15 @@ function OllamaLayout:generate()
             end
         end,
     })
+end
+function OllamaLayout:_append_result(str)
+    vim.schedule(function() lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, str) end)
+end
 
+function OllamaLayout:generate()
+    self:_prepare_layout_for_generation()
+    local prompt = self:_get_prompt()
+    self:_create_generation_job(prompt)
     self.job:start()
 end
 
