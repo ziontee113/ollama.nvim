@@ -10,7 +10,7 @@ local ollama_port = 11434
 local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port)
 
 OllamaLayout = {}
-OllamaLayout__index = OllamaLayout
+OllamaLayout.__index = OllamaLayout
 
 function OllamaLayout.new()
     local instance = setmetatable({}, OllamaLayout)
@@ -20,8 +20,8 @@ function OllamaLayout.new()
     instance.prompt_popup = prompt_popup
     instance.result_popup = result_popup
 
-    instance._map_prompt_popup_keys()
-    instance._map_result_popup_keys()
+    instance:_map_prompt_popup_keys()
+    instance:_map_result_popup_keys()
 
     return instance
 end
@@ -63,13 +63,23 @@ function OllamaLayout:generate()
                     )
                 end
 
-                lib_buf.append_str_to_end_of_buffer(self.result_popup.bufnr, decoded.response)
+                vim.schedule(
+                    function()
+                        lib_buf.append_str_to_end_of_buffer(
+                            self.result_popup.bufnr,
+                            decoded.response
+                        )
+                    end
+                )
             end
         end,
     })
+
+    self.job:start()
 end
 
 function OllamaLayout:mount()
+    self.mounted = true
     self.layout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
     vim.api.nvim_buf_call(self.prompt_popup.bufnr, function() vim.cmd("startinsert") end)
@@ -79,7 +89,13 @@ function OllamaLayout:_update_result_popup_bottom_text(text)
     self.result_popup.border:set_text("bottom", text)
 end
 
-function OllamaLayout:show() self.layout:show() end
+function OllamaLayout:show()
+    if not self.mounted then
+        self:mount()
+    else
+        self.layout:show()
+    end
+end
 function OllamaLayout:hide() self.layout:hide() end
 
 function OllamaLayout:interupt()
@@ -107,3 +123,5 @@ function OllamaLayout:_map_result_popup_keys()
     popup:map("n", "<Esc>", function() self:interupt() end, {})
     popup:map("n", "q", function() self:hide() end, {})
 end
+
+return OllamaLayout
