@@ -1,9 +1,10 @@
 -- imports
 
-local Layout = require("nui.layout")
-local Popup = require("nui.popup")
 local NuiText = require("nui.text")
 local Job = require("plenary.job")
+
+local lib_buf = require("ollama.lib.buffer")
+local lib_layout = require("ollama.lib.layout")
 
 local M = {}
 
@@ -12,75 +13,9 @@ local M = {}
 local ollama_port = 11434
 local ollama_url = string.format("http://localhost:%s/api/generate", ollama_port)
 
--- functions
-
-local popup_padding = {
-    top = 2,
-    bottom = 2,
-    left = 3,
-    right = 3,
-}
-
-local prompt_popup = Popup({
-    enter = true,
-    border = {
-        style = "rounded",
-        padding = popup_padding,
-        text = {
-            top = "Prompt",
-        },
-    },
-    buf_options = {
-        filetype = "ollama_prompt",
-    },
-})
-
-local result_popup = Popup({
-    focusable = true,
-    border = {
-        padding = popup_padding,
-        style = "rounded",
-        text = {
-            top = "Result",
-            top_align = "center",
-            bottom = "Standby",
-            bottom_align = "left",
-        },
-    },
-    buf_options = {
-        modifiable = true,
-        readonly = false,
-        filetype = "markdown",
-    },
-    win_options = {
-        wrap = true,
-        linebreak = true,
-    },
-})
-
-local layout = Layout(
-    {
-        position = "50%",
-        size = {
-            width = 80,
-            height = 40,
-        },
-    },
-    Layout.Box({
-        Layout.Box(prompt_popup, { size = "20%" }),
-        Layout.Box(result_popup, { size = "80%" }),
-    }, { dir = "col" })
-)
-
-local append_str_to_end_of_buffer = function(bufnr, str)
-    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-    local last_line = lines[#lines]
-    local new_lines = vim.split(str, "\n")
-
-    vim.api.nvim_buf_set_text(bufnr, #lines - 1, #last_line, #lines - 1, #last_line, new_lines)
-end
-
 -- main function
+
+local layout, prompt_popup, result_popup = lib_layout.create_default_layout()
 
 local main = function()
     layout:mount()
@@ -95,7 +30,7 @@ local main = function()
         vim.api.nvim_buf_set_lines(result_popup.bufnr, 0, -1, false, {})
 
         local parameters = {
-            model = "zephyr",
+            model = "codellama",
             prompt = prompt,
             -- stream = false,
         }
@@ -124,7 +59,12 @@ local main = function()
                     end
 
                     vim.schedule(
-                        function() append_str_to_end_of_buffer(result_popup.bufnr, decoded.response) end
+                        function()
+                            lib_buf.append_str_to_end_of_buffer(
+                                result_popup.bufnr,
+                                decoded.response
+                            )
+                        end
                     )
                 end
             end,
@@ -178,6 +118,5 @@ end
 
 vim.keymap.set("n", "<A-p>", function() main() end, {})
 
--- return module
 return M
 -- {{{nvim-execute-on-save}}}
