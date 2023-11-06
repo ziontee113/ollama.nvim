@@ -13,16 +13,16 @@ local layout_map = {
         relative = "editor",
         position = "50%",
         size = {
-            width = 80,
-            height = 48,
+            width = "80%",
+            height = "80%",
         },
     },
-    big = {
+    small = {
         relative = "editor",
         position = "50%",
         size = {
-            width = "80%",
-            height = "80%",
+            width = 80,
+            height = 48,
         },
     },
 }
@@ -34,11 +34,12 @@ OllamaLayout.__index = OllamaLayout
 
 function OllamaLayout.new()
     local instance = setmetatable({}, OllamaLayout)
-    local layout, prompt_popup, result_popup = layout_create.create_default_layout()
+    local layout, prompt_popup, result_popup, settings_popup = layout_create.create_default_layout()
 
     instance.layout = layout
     instance.prompt_popup = prompt_popup
     instance.result_popup = result_popup
+    instance.settings_popup = settings_popup
 
     instance.model = "zephyr"
     instance.ollama_port = 11434
@@ -46,6 +47,7 @@ function OllamaLayout.new()
     instance.ollama_models_url = string.format("http://localhost:%s/api/tags", instance.ollama_port)
 
     instance:_map_shared_keys()
+    instance:_map_settings_popup_keys()
     instance:_map_prompt_popup_keys()
     instance:_map_result_popup_keys()
 
@@ -168,19 +170,29 @@ end
 
 function OllamaLayout:switch_to_result_popup() vim.api.nvim_set_current_win(self.result_popup.winid) end
 function OllamaLayout:switch_to_prompt_popup() vim.api.nvim_set_current_win(self.prompt_popup.winid) end
+function OllamaLayout:switch_to_settings_popup()
+    vim.api.nvim_set_current_win(self.settings_popup.winid)
+end
+
+-- mappings --
 
 function OllamaLayout:smap(mode, mapping, map_to, opts)
     self.prompt_popup:map(mode, mapping, map_to, opts or {})
     self.result_popup:map(mode, mapping, map_to, opts or {})
+    self.settings_popup:map(mode, mapping, map_to, opts or {})
 end
-
--- mappings --
 
 function OllamaLayout:_map_shared_keys()
     self:smap("n", "<CR>", function() self:generate() end, {})
     self:smap("n", "q", function() self:hide() end, {})
     self:smap("n", "m", function() self:select_model() end, {})
     self:smap("n", "<C-l>", function() self:toggle_layout() end, {})
+    self:smap("n", "s", function() self:switch_to_settings_popup() end, {})
+end
+
+function OllamaLayout:_map_settings_popup_keys()
+    local popup = self.settings_popup
+    popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
 end
 
 function OllamaLayout:_map_prompt_popup_keys()
@@ -201,7 +213,8 @@ function OllamaLayout:mount()
     self.mounted = true
     self.layout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
-    vim.api.nvim_buf_call(self.prompt_popup.bufnr, function() vim.cmd("startinsert") end)
+    vim.api.nvim_set_current_win(self.prompt_popup.winid)
+    vim.cmd("startinsert")
 end
 
 function OllamaLayout:show()

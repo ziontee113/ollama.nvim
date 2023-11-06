@@ -51,25 +51,46 @@ local create_default_result_popup = function()
     })
 end
 
+local create_settings_popup = function()
+    return Popup({
+        enter = true,
+        border = {
+            style = "rounded",
+            padding = popup_padding,
+            text = {
+                top = "Settings",
+            },
+        },
+        buf_options = {
+            filetype = "ollama_configuration",
+        },
+    })
+end
+
 M.create_default_layout = function()
     local prompt_popup = create_default_prompt_popup()
     local result_popup = create_default_result_popup()
+    local settings_popup = create_settings_popup()
 
     local layout = Layout(
         {
+            relative = "editor",
             position = "50%",
             size = {
-                width = 80,
-                height = 40,
+                width = "80%",
+                height = "80%",
             },
         },
         Layout.Box({
-            Layout.Box(prompt_popup, { size = "20%" }),
-            Layout.Box(result_popup, { size = "80%" }),
-        }, { dir = "col" })
+            Layout.Box({
+                Layout.Box(prompt_popup, { size = "20%" }),
+                Layout.Box(result_popup, { size = "80%" }),
+            }, { size = "80%", dir = "col" }),
+            Layout.Box(settings_popup, { size = "20%" }),
+        }, { dir = "row" })
     )
 
-    return layout, prompt_popup, result_popup
+    return layout, prompt_popup, result_popup, settings_popup
 end
 
 return M
