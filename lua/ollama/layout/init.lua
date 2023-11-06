@@ -54,6 +54,7 @@ function OllamaLayout.new()
     instance.ollama_models_url = string.format("http://localhost:%s/api/tags", instance.ollama_port)
 
     instance:_map_shared_keys()
+    instance:_map_system_prompt_popup_keys()
     instance:_map_settings_popup_keys()
     instance:_map_prompt_popup_keys()
     instance:_map_result_popup_keys()
@@ -235,6 +236,11 @@ function OllamaLayout:_map_shared_keys()
     self:smap("n", "tk", function() self.settings_manager:go_to_param("top_k") end, {})
 
     self:smap("n", "S", function() self:switch_to_system_prompt_popup() end, {})
+end
+
+function OllamaLayout:_map_system_prompt_popup_keys()
+    local popup = self.system_prompt_popup
+    popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
 end
 
 function OllamaLayout:_map_settings_popup_keys()
