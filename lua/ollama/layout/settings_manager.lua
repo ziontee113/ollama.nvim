@@ -1,5 +1,7 @@
 local M = {}
 
+local ns = vim.api.nvim_create_namespace("ollama_settings_popup")
+
 local params = {
     {
         param = "mirostat",
@@ -56,11 +58,11 @@ local params = {
         desc = "Sets the random number seed to use for generation. Setting this to a specific number will make the model generate the same text for the same prompt.",
         default = 0,
     },
-    {
-        param = "stop",
-        desc = "Sets the stop sequences to use.",
-        default = "AI assistant:",
-    },
+    -- {
+    --     param = "stop",
+    --     desc = "Sets the stop sequences to use.",
+    --     default = "AI assistant:",
+    -- },
     {
         param = "tfs_z",
         desc = "Tail free sampling is used to reduce the impact of less probable tokens from the output. A higher value (e.g., 2.0) will reduce the impact more, while a value of 1.0 disables this setting.",
@@ -83,4 +85,43 @@ local params = {
     },
 }
 
-return M
+SettingsManager = {}
+SettingsManager.__index = SettingsManager
+
+function SettingsManager.new(bufnr)
+    local instance = setmetatable({}, SettingsManager)
+    instance.bufnr = bufnr
+    return instance
+end
+
+function SettingsManager:init()
+    -- management
+    self.map = {}
+
+    -- insert empty rows
+    local empty_rows = {}
+    for i, _ in pairs(params) do
+        table.insert(empty_rows, "")
+        if i < #params then table.insert(empty_rows, "") end
+    end
+    vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, false, empty_rows)
+
+    -- set extmarks
+    local j = 0
+    for _, tbl in ipairs(params) do
+        vim.api.nvim_buf_set_extmark(self.bufnr, ns, j, 0, {
+            virt_text = { { tbl.param, "GruvboxYellowSign" } },
+            virt_text_pos = "overlay",
+        })
+
+        self.map[tbl.param] = { line = j, value = tbl.default }
+        self.map[tbl.param].extmark = vim.api.nvim_buf_set_extmark(self.bufnr, ns, j, 0, {
+            virt_text = { { tostring(tbl.default), "GruvboxBlueSign" } },
+            virt_text_pos = "right_align",
+        })
+
+        j = j + 2
+    end
+end
+
+return SettingsManager

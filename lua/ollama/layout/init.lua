@@ -3,6 +3,7 @@ local Job = require("plenary.job")
 local curl = require("plenary.curl")
 
 local layout_create = require("ollama.layout.create")
+local SettingsManager = require("ollama.layout.settings_manager")
 local lib_buf = require("ollama.lib.buffer")
 
 -- refactor later --
@@ -208,6 +209,8 @@ end
 function OllamaLayout:_map_settings_popup_keys()
     local popup = self.settings_popup
     popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
+    popup:map("n", "j", "2j", { noremap = true })
+    popup:map("n", "k", "2k", { noremap = true })
 end
 
 function OllamaLayout:_map_prompt_popup_keys()
@@ -232,6 +235,9 @@ function OllamaLayout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
     vim.api.nvim_set_current_win(self.prompt_popup.winid)
     vim.cmd("startinsert")
+
+    self.settings_manager = SettingsManager.new(self.settings_popup.bufnr)
+    self.settings_manager:init()
 end
 
 function OllamaLayout:show()
