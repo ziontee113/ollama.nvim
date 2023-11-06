@@ -215,6 +215,12 @@ function OllamaLayout:_map_settings_popup_keys()
     popup:map("n", "H", function() self.settings_manager:decrement(2) end, {})
     popup:map("n", "K", function() self.settings_manager:increment(4) end, {})
     popup:map("n", "J", function() self.settings_manager:decrement(4) end, {})
+    popup:map(
+        "n",
+        "d",
+        function() self.settings_manager:restore_default_value() end,
+        { nowait = true }
+    )
 end
 
 function OllamaLayout:_map_prompt_popup_keys()

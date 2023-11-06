@@ -1,5 +1,10 @@
 local ns = vim.api.nvim_create_namespace("ollama_settings_popup")
 
+local highlight_groups = {
+    default_value = "GruvboxBlueSign",
+    modified_value = "GruvboxOrangeSign",
+}
+
 local map = {
     {
         param = "mirostat",
@@ -147,10 +152,13 @@ function SettingsManager:init()
 end
 
 function SettingsManager:update_extmark_value(index)
+    local hl_group = highlight_groups.default_value
+    if map[index].value ~= map[index].default then hl_group = highlight_groups.modified_value end
+
     vim.api.nvim_buf_del_extmark(self.settings_popup.bufnr, ns, map[index].extmark)
     map[index].extmark =
         vim.api.nvim_buf_set_extmark(self.settings_popup.bufnr, ns, map[index].line, 0, {
-            virt_text = { { tostring(map[index].value), "GruvboxBlueSign" } },
+            virt_text = { { tostring(map[index].value), hl_group } },
             virt_text_pos = "right_align",
         })
 end
@@ -159,6 +167,12 @@ function SettingsManager:get_setting_index_at_cursor()
     local cursor_line = unpack(vim.api.nvim_win_get_cursor(0))
     local index = math.floor(cursor_line / 2) + 1
     return index
+end
+
+function SettingsManager:restore_default_value()
+    local index = self:get_setting_index_at_cursor()
+    map[index].value = map[index].default
+    self:update_extmark_value(index)
 end
 
 function SettingsManager:_inc(positive, multiply)
