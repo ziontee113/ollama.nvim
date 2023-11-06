@@ -245,7 +245,9 @@ function OllamaLayout:show()
         self:mount()
     else
         self.layout:show()
-        vim.api.nvim_set_current_win(self.last_active_popup.winid)
+        if self.last_active_popup then
+            vim.api.nvim_set_current_win(self.last_active_popup.winid)
+        end
     end
 end
 
