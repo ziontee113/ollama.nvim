@@ -201,7 +201,17 @@ function OllamaLayout:_map_shared_keys()
     self:smap("n", "q", function() self:hide() end, {})
     self:smap("n", "m", function() self:select_model() end, {})
     self:smap("n", "<C-l>", function() self:toggle_layout() end, {})
-    self:smap("n", "s", function() self:switch_to_settings_popup() end, {})
+
+    self:smap("n", "M", function() self.settings_manager:go_to_param("mirostat") end, {})
+    self:smap("n", "x", function() self.settings_manager:go_to_param("num_ctx") end, {})
+    self:smap("n", "rn", function() self.settings_manager:go_to_param("repeat_last_n") end, {})
+    self:smap("n", "rp", function() self.settings_manager:go_to_param("repeat_penalty") end, {})
+    self:smap("n", "T", function() self.settings_manager:go_to_param("temperature") end, {})
+    self:smap("n", "s", function() self.settings_manager:go_to_param("seed") end, {})
+    self:smap("n", "gp", function() self.settings_manager:go_to_param("num_predict") end, {})
+    self:smap("n", "tz", function() self.settings_manager:go_to_param("tfs_z") end, {})
+    self:smap("n", "tp", function() self.settings_manager:go_to_param("top_p") end, {})
+    self:smap("n", "tk", function() self.settings_manager:go_to_param("top_k") end, {})
 end
 
 function OllamaLayout:_map_settings_popup_keys()

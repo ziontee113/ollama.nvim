@@ -93,7 +93,7 @@ local map = {
     {
         param = "num_predict",
         desc = "Maximum number of tokens to predict when generating text. (Default: 128, -1 = infinite generation, -2 = fill context)",
-        default = 42,
+        default = 128,
         increment = 1,
         min = -2,
     },
@@ -107,7 +107,7 @@ local map = {
     {
         param = "top_p",
         desc = "Works together with top-k. A higher value (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. (Default: 0.9)",
-        default = 0.85,
+        default = 0.9,
         increment = 0.05,
         min = 0,
     },
@@ -184,6 +184,20 @@ function SettingsManager:_inc(positive, multiply)
     if map[index].value > (map[index].max or math.huge) then map[index].value = map[index].max end
 
     self:update_extmark_value(index)
+end
+
+local find_index_from_param = function(param)
+    for index, tbl in ipairs(map) do
+        if tbl.param == param then return index end
+    end
+end
+
+function SettingsManager:go_to_param(param)
+    local index = find_index_from_param(param)
+    if index then
+        vim.api.nvim_win_set_cursor(self.settings_popup.winid, { map[index].line + 1, 0 })
+        vim.api.nvim_set_current_win(self.settings_popup.winid)
+    end
 end
 
 function SettingsManager:increment(multiply) self:_inc(1, multiply or 1) end
