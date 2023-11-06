@@ -155,12 +155,6 @@ function OllamaLayout:toggle_layout()
     layout:update(layout_map[active_layout])
 end
 
--- settings popup --
-
-function OllamaLayout:_prepare_settings_panel()
-    -- TODO:
-end
-
 -- mapped methods --
 
 function OllamaLayout:generate()
@@ -213,6 +207,10 @@ function OllamaLayout:_map_settings_popup_keys()
     popup:map("n", "k", "2k", { noremap = true })
     popup:map("n", "l", function() self.settings_manager:increment() end, {})
     popup:map("n", "h", function() self.settings_manager:decrement() end, {})
+    popup:map("n", "L", function() self.settings_manager:increment(2) end, {})
+    popup:map("n", "H", function() self.settings_manager:decrement(2) end, {})
+    popup:map("n", "K", function() self.settings_manager:increment(4) end, {})
+    popup:map("n", "J", function() self.settings_manager:decrement(4) end, {})
 end
 
 function OllamaLayout:_map_prompt_popup_keys()
