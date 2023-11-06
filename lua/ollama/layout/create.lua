@@ -91,7 +91,28 @@ local create_description_popup = function()
     })
 end
 
+local create_system_prompt_popup = function()
+    return Popup({
+        enter = true,
+        border = {
+            style = "rounded",
+            padding = popup_padding,
+            text = {
+                top = "SYSTEM PROMPT",
+            },
+        },
+        buf_options = {
+            filetype = "markdown",
+        },
+        win_options = {
+            wrap = true,
+            linebreak = true,
+        },
+    })
+end
+
 M.create_default_layout = function()
+    local system_prompt_popup = create_system_prompt_popup()
     local prompt_popup = create_default_prompt_popup()
     local result_popup = create_default_result_popup()
     local settings_popup = create_settings_popup()
@@ -108,8 +129,9 @@ M.create_default_layout = function()
         },
         Layout.Box({
             Layout.Box({
+                Layout.Box(system_prompt_popup, { size = "10%" }),
                 Layout.Box(prompt_popup, { size = "20%" }),
-                Layout.Box(result_popup, { size = "80%" }),
+                Layout.Box(result_popup, { size = "70%" }),
             }, { size = "80%", dir = "col" }),
             Layout.Box({
                 Layout.Box(settings_popup, { size = "50%" }),
@@ -118,7 +140,12 @@ M.create_default_layout = function()
         }, { dir = "row" })
     )
 
-    return layout, prompt_popup, result_popup, settings_popup, description_popup
+    return layout,
+        prompt_popup,
+        result_popup,
+        settings_popup,
+        description_popup,
+        system_prompt_popup
 end
 
 return M

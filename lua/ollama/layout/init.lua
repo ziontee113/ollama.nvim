@@ -36,10 +36,11 @@ OllamaLayout.__index = OllamaLayout
 
 function OllamaLayout.new()
     local instance = setmetatable({}, OllamaLayout)
-    local layout, prompt_popup, result_popup, settings_popup, description_popup =
+    local layout, prompt_popup, result_popup, settings_popup, description_popup, system_prompt_popup =
         layout_create.create_default_layout()
 
     instance.layout = layout
+    instance.system_prompt_popup = system_prompt_popup
     instance.prompt_popup = prompt_popup
     instance.result_popup = result_popup
     instance.settings_popup = settings_popup
@@ -93,17 +94,25 @@ end
 
 -- generation job --
 
+function OllamaLayout:_get_system_prompt()
+    local system_prompt_popup_lines =
+        vim.api.nvim_buf_get_lines(self.system_prompt_popup.bufnr, 0, -1, false)
+    local system_prompt = table.concat(system_prompt_popup_lines, "\n")
+    if #system_prompt == 0 then return nil end
+    return system_prompt
+end
 function OllamaLayout:_get_prompt()
     local prompt_popup_lines = vim.api.nvim_buf_get_lines(self.prompt_popup.bufnr, 0, -1, false)
     local prompt = table.concat(prompt_popup_lines, "\n")
     return prompt
 end
-function OllamaLayout:_create_generation_job(prompt)
+function OllamaLayout:_create_generation_job(prompt, system_prompt)
     local options = self.settings_manager:get_option_parameters()
     local parameters = {
         model = self.model,
         prompt = prompt,
         options = options,
+        system = system_prompt,
     }
 
     local pending_json_string = ""
@@ -164,7 +173,8 @@ end
 function OllamaLayout:generate()
     self:_prepare_layout_for_generation()
     local prompt = self:_get_prompt()
-    self:_create_generation_job(prompt)
+    local system_prompt = self:_get_system_prompt()
+    self:_create_generation_job(prompt, system_prompt)
     self.job:start()
 end
 
@@ -175,6 +185,10 @@ function OllamaLayout:interupt()
     end
 end
 
+function OllamaLayout:switch_to_system_prompt_popup()
+    self.last_active_popup = self.system_prompt_popup
+    vim.api.nvim_set_current_win(self.system_prompt_popup.winid)
+end
 function OllamaLayout:switch_to_result_popup()
     self.last_active_popup = self.result_popup
     vim.api.nvim_set_current_win(self.result_popup.winid)
@@ -194,24 +208,33 @@ function OllamaLayout:smap(mode, mapping, map_to, opts)
     self.prompt_popup:map(mode, mapping, map_to, opts or {})
     self.result_popup:map(mode, mapping, map_to, opts or {})
     self.settings_popup:map(mode, mapping, map_to, opts or {})
+    self.system_prompt_popup:map(mode, mapping, map_to, opts or {})
 end
 
 function OllamaLayout:_map_shared_keys()
     self:smap("n", "<CR>", function() self:generate() end, {})
     self:smap("n", "q", function() self:hide() end, {})
     self:smap("n", "m", function() self:select_model() end, {})
+    self:smap("n", "<C-c>", function() self:interupt() end, {})
     self:smap("n", "<C-l>", function() self:toggle_layout() end, {})
 
     self:smap("n", "M", function() self.settings_manager:go_to_param("mirostat") end, {})
     self:smap("n", "x", function() self.settings_manager:go_to_param("num_ctx") end, {})
     self:smap("n", "rn", function() self.settings_manager:go_to_param("repeat_last_n") end, {})
     self:smap("n", "rp", function() self.settings_manager:go_to_param("repeat_penalty") end, {})
-    self:smap("n", "T", function() self.settings_manager:go_to_param("temperature") end, {})
+    self:smap(
+        "n",
+        "T",
+        function() self.settings_manager:go_to_param("temperature") end,
+        { nowait = true }
+    )
     self:smap("n", "s", function() self.settings_manager:go_to_param("seed") end, {})
     self:smap("n", "gp", function() self.settings_manager:go_to_param("num_predict") end, {})
     self:smap("n", "tz", function() self.settings_manager:go_to_param("tfs_z") end, {})
     self:smap("n", "tp", function() self.settings_manager:go_to_param("top_p") end, {})
     self:smap("n", "tk", function() self.settings_manager:go_to_param("top_k") end, {})
+
+    self:smap("n", "S", function() self:switch_to_system_prompt_popup() end, {})
 end
 
 function OllamaLayout:_map_settings_popup_keys()
@@ -238,7 +261,6 @@ function OllamaLayout:_map_prompt_popup_keys()
     popup:map("i", "<C-S>", function() self:generate() end, {})
     popup:map("s", "<C-S>", function() self:generate() end, {})
     popup:map("n", "<Tab>", function() self:switch_to_result_popup() end, {})
-    popup:map("n", "<C-c>", function() self:interupt() end, {})
 end
 
 function OllamaLayout:_map_result_popup_keys()
