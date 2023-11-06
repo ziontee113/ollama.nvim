@@ -168,4 +168,19 @@ end
 function SettingsManager:increment(multiply) self:_inc(1, multiply or 1) end
 function SettingsManager:decrement(multiply) self:_inc(-1, multiply or 1) end
 
+function SettingsManager:get_option_parameters()
+    local params = {}
+    local number_of_modified_params = 0
+    for _, tbl in ipairs(map) do
+        if tbl.value ~= tbl.default then
+            params[tbl.param] = tbl.value
+            number_of_modified_params = number_of_modified_params + 1
+        end
+    end
+    if number_of_modified_params == 0 then
+        return nil -- if we give the Ollama API an empty option table, it will error 404.
+    end
+    return params
+end
+
 return SettingsManager

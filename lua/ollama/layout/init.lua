@@ -96,10 +96,11 @@ function OllamaLayout:_get_prompt()
     return prompt
 end
 function OllamaLayout:_create_generation_job(prompt)
-    -- refactor this
+    local options = self.settings_manager:get_option_parameters()
     local parameters = {
         model = self.model,
         prompt = prompt,
+        options = options,
     }
 
     local pending_json_string = ""
