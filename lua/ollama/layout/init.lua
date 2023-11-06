@@ -211,6 +211,8 @@ function OllamaLayout:_map_settings_popup_keys()
     popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
     popup:map("n", "j", "2j", { noremap = true })
     popup:map("n", "k", "2k", { noremap = true })
+    popup:map("n", "l", function() self.settings_manager:increment() end, {})
+    popup:map("n", "h", function() self.settings_manager:decrement() end, {})
 end
 
 function OllamaLayout:_map_prompt_popup_keys()
