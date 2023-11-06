@@ -154,6 +154,12 @@ function OllamaLayout:toggle_layout()
     layout:update(layout_map[active_layout])
 end
 
+-- settings popup --
+
+function OllamaLayout:_prepare_settings_panel()
+    -- TODO:
+end
+
 -- mapped methods --
 
 function OllamaLayout:generate()
@@ -209,11 +215,13 @@ function OllamaLayout:_map_prompt_popup_keys()
     popup:map("i", "<C-S>", function() self:generate() end, {})
     popup:map("s", "<C-S>", function() self:generate() end, {})
     popup:map("n", "<Tab>", function() self:switch_to_result_popup() end, {})
+    popup:map("n", "<C-c>", function() self:interupt() end, {})
 end
 
 function OllamaLayout:_map_result_popup_keys()
     local popup = self.result_popup
     popup:map("n", "<Tab>", function() self:switch_to_prompt_popup() end, {})
+    popup:map("n", "<Esc>", function() self:interupt() end, {})
 end
 
 -- public methods --
@@ -222,7 +230,7 @@ function OllamaLayout:mount()
     self.mounted = true
     self.layout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
-    vim.api.nvim_set_current_win(self.last_active_popup.winid)
+    vim.api.nvim_set_current_win(self.prompt_popup.winid)
     vim.cmd("startinsert")
 end
 
