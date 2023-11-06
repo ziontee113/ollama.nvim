@@ -41,6 +41,8 @@ function OllamaLayout.new()
     instance.result_popup = result_popup
     instance.settings_popup = settings_popup
 
+    instance.last_active_popup = prompt_popup
+
     instance.model = "zephyr"
     instance.ollama_port = 11434
     instance.ollama_url = string.format("http://localhost:%s/api/generate", instance.ollama_port)
@@ -168,9 +170,16 @@ function OllamaLayout:interupt()
     end
 end
 
-function OllamaLayout:switch_to_result_popup() vim.api.nvim_set_current_win(self.result_popup.winid) end
-function OllamaLayout:switch_to_prompt_popup() vim.api.nvim_set_current_win(self.prompt_popup.winid) end
+function OllamaLayout:switch_to_result_popup()
+    self.last_active_popup = self.result_popup
+    vim.api.nvim_set_current_win(self.result_popup.winid)
+end
+function OllamaLayout:switch_to_prompt_popup()
+    self.last_active_popup = self.prompt_popup
+    vim.api.nvim_set_current_win(self.prompt_popup.winid)
+end
 function OllamaLayout:switch_to_settings_popup()
+    self.last_active_popup = self.setttings_popup
     vim.api.nvim_set_current_win(self.settings_popup.winid)
 end
 
@@ -213,7 +222,7 @@ function OllamaLayout:mount()
     self.mounted = true
     self.layout:mount()
     self:_update_result_popup_bottom_text("waiting for prompt...")
-    vim.api.nvim_set_current_win(self.prompt_popup.winid)
+    vim.api.nvim_set_current_win(self.last_active_popup.winid)
     vim.cmd("startinsert")
 end
 
@@ -222,6 +231,7 @@ function OllamaLayout:show()
         self:mount()
     else
         self.layout:show()
+        vim.api.nvim_set_current_win(self.last_active_popup.winid)
     end
 end
 
