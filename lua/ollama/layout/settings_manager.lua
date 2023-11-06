@@ -111,9 +111,10 @@ local map = {
 SettingsManager = {}
 SettingsManager.__index = SettingsManager
 
-function SettingsManager.new(bufnr)
+function SettingsManager.new(settings_popup, description_popup)
     local instance = setmetatable({}, SettingsManager)
-    instance.bufnr = bufnr
+    instance.settings_popup = settings_popup
+    instance.description_popup = description_popup
     return instance
 end
 
@@ -124,19 +125,19 @@ function SettingsManager:init()
         table.insert(empty_rows, "")
         if i < #map then table.insert(empty_rows, "") end
     end
-    vim.api.nvim_buf_set_lines(self.bufnr, 0, -1, false, empty_rows)
+    vim.api.nvim_buf_set_lines(self.settings_popup.bufnr, 0, -1, false, empty_rows)
 
     -- set extmarks
     local j = 0
     for i, tbl in ipairs(map) do
-        vim.api.nvim_buf_set_extmark(self.bufnr, ns, j, 0, {
+        vim.api.nvim_buf_set_extmark(self.settings_popup.bufnr, ns, j, 0, {
             virt_text = { { tbl.param, "GruvboxYellowSign" } },
             virt_text_pos = "overlay",
         })
 
         map[i].line = j
         map[i].value = map[i].default
-        map[i].extmark = vim.api.nvim_buf_set_extmark(self.bufnr, ns, j, 0, {
+        map[i].extmark = vim.api.nvim_buf_set_extmark(self.settings_popup.bufnr, ns, j, 0, {
             virt_text = { { tostring(tbl.default), "GruvboxBlueSign" } },
             virt_text_pos = "right_align",
         })
@@ -146,16 +147,22 @@ function SettingsManager:init()
 end
 
 function SettingsManager:update_extmark_value(index)
-    vim.api.nvim_buf_del_extmark(self.bufnr, ns, map[index].extmark)
-    map[index].extmark = vim.api.nvim_buf_set_extmark(self.bufnr, ns, map[index].line, 0, {
-        virt_text = { { tostring(map[index].value), "GruvboxBlueSign" } },
-        virt_text_pos = "right_align",
-    })
+    vim.api.nvim_buf_del_extmark(self.settings_popup.bufnr, ns, map[index].extmark)
+    map[index].extmark =
+        vim.api.nvim_buf_set_extmark(self.settings_popup.bufnr, ns, map[index].line, 0, {
+            virt_text = { { tostring(map[index].value), "GruvboxBlueSign" } },
+            virt_text_pos = "right_align",
+        })
+end
+
+function SettingsManager:get_setting_index_at_cursor()
+    local cursor_line = unpack(vim.api.nvim_win_get_cursor(0))
+    local index = math.floor(cursor_line / 2) + 1
+    return index
 end
 
 function SettingsManager:_inc(positive, multiply)
-    local cursor_line = unpack(vim.api.nvim_win_get_cursor(0))
-    local index = math.floor(cursor_line / 2) + 1
+    local index = self:get_setting_index_at_cursor()
 
     map[index].value = map[index].value + (map[index].increment * positive * multiply)
 
@@ -181,6 +188,13 @@ function SettingsManager:get_option_parameters()
         return nil -- if we give the Ollama API an empty option table, it will error 404.
     end
     return params
+end
+
+function SettingsManager:update_description()
+    local index = self:get_setting_index_at_cursor()
+    vim.api.nvim_buf_set_lines(self.description_popup.bufnr, 0, -1, false, {
+        map[index].desc,
+    })
 end
 
 return SettingsManager

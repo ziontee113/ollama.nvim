@@ -1,6 +1,7 @@
 local NuiText = require("nui.text")
 local Job = require("plenary.job")
 local curl = require("plenary.curl")
+local event = require("nui.utils.autocmd").event
 
 local layout_create = require("ollama.layout.create")
 local SettingsManager = require("ollama.layout.settings_manager")
@@ -35,12 +36,14 @@ OllamaLayout.__index = OllamaLayout
 
 function OllamaLayout.new()
     local instance = setmetatable({}, OllamaLayout)
-    local layout, prompt_popup, result_popup, settings_popup = layout_create.create_default_layout()
+    local layout, prompt_popup, result_popup, settings_popup, description_popup =
+        layout_create.create_default_layout()
 
     instance.layout = layout
     instance.prompt_popup = prompt_popup
     instance.result_popup = result_popup
     instance.settings_popup = settings_popup
+    instance.description_popup = description_popup
 
     instance.last_active_popup = prompt_popup
 
@@ -149,7 +152,7 @@ end
 function OllamaLayout:toggle_layout()
     local layout = self.layout
     if active_layout == "default" then
-        active_layout = "big"
+        active_layout = "small"
     else
         active_layout = "default"
     end
@@ -237,8 +240,13 @@ function OllamaLayout:mount()
     vim.api.nvim_set_current_win(self.prompt_popup.winid)
     vim.cmd("startinsert")
 
-    self.settings_manager = SettingsManager.new(self.settings_popup.bufnr)
+    self.settings_manager = SettingsManager.new(self.settings_popup, self.description_popup)
     self.settings_manager:init()
+    self.settings_popup:on(
+        { event.CursorMoved },
+        function() self.settings_manager:update_description() end,
+        {}
+    )
 end
 
 function OllamaLayout:show()
