@@ -87,7 +87,7 @@ function OllamaLayout:select_model()
         prompt = "Select model:",
     }, function(choice)
         self.model = choice
-        self:_update_prompt_title(self.model)
+        self:_update_result_popup_title(self.model)
     end)
 end
 
@@ -145,7 +145,7 @@ end
 function OllamaLayout:_update_result_popup_bottom_text(text)
     vim.schedule(function() self.result_popup.border:set_text("bottom", text) end)
 end
-function OllamaLayout:_update_prompt_title(text)
+function OllamaLayout:_update_result_popup_title(text)
     vim.schedule(function() self.result_popup.border:set_text("top", text, "center") end)
 end
 
@@ -252,6 +252,7 @@ end
 function OllamaLayout:mount()
     self.mounted = true
     self.layout:mount()
+    self:_update_result_popup_title(self.model)
     self:_update_result_popup_bottom_text("waiting for prompt...")
     vim.api.nvim_set_current_win(self.prompt_popup.winid)
     vim.cmd("startinsert")
