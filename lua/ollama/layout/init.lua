@@ -19,12 +19,12 @@ local layout_map = {
             height = "80%",
         },
     },
-    small = {
+    full = {
         relative = "editor",
         position = "50%",
         size = {
-            width = 80,
-            height = 48,
+            width = "90%",
+            height = "90%",
         },
     },
 }
@@ -162,7 +162,7 @@ end
 function OllamaLayout:toggle_layout()
     local layout = self.layout
     if active_layout == "default" then
-        active_layout = "small"
+        active_layout = "full"
     else
         active_layout = "default"
     end
