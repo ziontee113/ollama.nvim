@@ -1,6 +1,7 @@
 # Ollama.nvim - Neovim Plugin to interact with Ollama API
 
-image here
+![Screenshot from 2023-11-08 06-14-42](https://github.com/ziontee113/ollama.nvim/assets/102876811/ede77ff2-9ca4-45b2-bc5b-626d81faaf23)
+
 
 ## ⚡Quick Start
 
