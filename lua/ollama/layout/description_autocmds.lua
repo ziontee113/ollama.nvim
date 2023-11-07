@@ -4,21 +4,21 @@ local M = {}
 
 local descriptions = {
     prompt_popup = [[
-<Tab> switch to `result`
+<Tab> `result`
  <CR> generate
  
-  [S]   switch to `system prompt`
+  [S]   `system prompt`
 ]],
     system_prompt_popup = [[
-<Tab> switch to `prompt`
+<Tab> `prompt`
  <CR> generate
 ]],
     result_popup = [[
-<Tab> switch to `prompt`
+<Tab> `prompt`
  <CR> generate
 <Esc> interupt
   `q`   close layout
-  `S`   switch to `system prompt`
+  `S`   `system prompt`
   `?`   show settings keymaps
 ]],
 }
