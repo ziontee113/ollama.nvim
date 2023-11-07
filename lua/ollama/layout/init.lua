@@ -4,7 +4,7 @@ local curl = require("plenary.curl")
 
 local layout_create = require("ollama.layout.create")
 local SettingsManager = require("ollama.layout.settings_manager")
-local description_autocmds = require("lua.ollama.layout.description_autocmds")
+local description_autocmds = require("ollama.layout.description_autocmds")
 local lib_buf = require("ollama.lib.buffer")
 
 -- refactor later --
@@ -23,8 +23,8 @@ local layout_map = {
         relative = "editor",
         position = "50%",
         size = {
-            width = "90%",
-            height = "90%",
+            width = "100%",
+            height = "100%",
         },
     },
 }

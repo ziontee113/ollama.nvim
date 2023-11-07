@@ -25,6 +25,10 @@ local descriptions = {
 
 local addons = [[
 
+  [m]   change model
+<C-l> resize layout
+  [q]   close layout
+
   `M`  mirostat
   `x`  num_ctx
  `gn`  num_gpt
@@ -36,8 +40,6 @@ local addons = [[
  `tz`  tfs_z
  `tp`  top_p
  `tk`  top_k
-
-  [q]   close layout
 ]]
 
 M.set = function(ollama_layout)

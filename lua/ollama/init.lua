@@ -4,8 +4,6 @@ local M = {}
 
 local layout = OllamaLayout.new()
 
-local main = function() layout:show() end
-
-vim.keymap.set("n", "<A-p>", function() main() end, {})
+M.show = function() layout:show() end
 
 return M

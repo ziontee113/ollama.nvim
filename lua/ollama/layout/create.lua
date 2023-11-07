@@ -4,10 +4,10 @@ local Popup = require("nui.popup")
 local M = {}
 
 local popup_padding = {
-    top = 2,
-    bottom = 2,
-    left = 3,
-    right = 3,
+    top = 1,
+    bottom = 1,
+    left = 2,
+    right = 2,
 }
 
 local create_default_prompt_popup = function()
@@ -130,13 +130,13 @@ M.create_default_layout = function()
         },
         Layout.Box({
             Layout.Box({
-                Layout.Box(system_prompt_popup, { size = "10%" }),
+                Layout.Box(system_prompt_popup, { size = "20%" }),
                 Layout.Box(prompt_popup, { size = "20%" }),
-                Layout.Box(result_popup, { size = "70%" }),
+                Layout.Box(result_popup, { size = "60%" }),
             }, { size = "80%", dir = "col" }),
             Layout.Box({
-                Layout.Box(settings_popup, { size = "50%" }),
-                Layout.Box(description_popup, { size = "50%" }),
+                Layout.Box(settings_popup, { size = "60%" }),
+                Layout.Box(description_popup, { size = "40%" }),
             }, { size = "20%", dir = "col" }),
         }, { dir = "row" })
     )
