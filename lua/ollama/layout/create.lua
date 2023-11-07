@@ -87,6 +87,7 @@ local create_description_popup = function()
         win_options = {
             wrap = true,
             linebreak = true,
+            conceallevel = 2,
         },
     })
 end

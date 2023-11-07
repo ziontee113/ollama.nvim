@@ -1,10 +1,10 @@
 local NuiText = require("nui.text")
 local Job = require("plenary.job")
 local curl = require("plenary.curl")
-local event = require("nui.utils.autocmd").event
 
 local layout_create = require("ollama.layout.create")
 local SettingsManager = require("ollama.layout.settings_manager")
+local description_autocmds = require("lua.ollama.layout.description_autocmds")
 local lib_buf = require("ollama.lib.buffer")
 
 -- refactor later --
@@ -203,6 +203,10 @@ function OllamaLayout:switch_to_settings_popup()
     vim.api.nvim_set_current_win(self.settings_popup.winid)
 end
 
+function OllamaLayout:update_description(lines)
+    vim.api.nvim_buf_set_lines(self.description_popup.bufnr, 0, -1, false, lines)
+end
+
 -- mappings --
 
 function OllamaLayout:smap(mode, mapping, map_to, opts)
@@ -286,6 +290,9 @@ end
 function OllamaLayout:mount()
     self.mounted = true
     self.layout:mount()
+
+    description_autocmds.set(self)
+
     self:_update_result_popup_title(self.model)
     self:_update_result_popup_bottom_text("waiting for prompt...")
     vim.api.nvim_set_current_win(self.prompt_popup.winid)
@@ -293,11 +300,6 @@ function OllamaLayout:mount()
 
     self.settings_manager = SettingsManager.new(self.settings_popup, self.description_popup)
     self.settings_manager:init()
-    self.settings_popup:on(
-        { event.CursorMoved },
-        function() self.settings_manager:update_description() end,
-        {}
-    )
 end
 
 function OllamaLayout:show()

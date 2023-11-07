@@ -8,7 +8,7 @@ local highlight_groups = {
 local map = {
     {
         param = "mirostat",
-        desc = "Enable Mirostat sampling for controlling perplexity. (default: 0, 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0)",
+        desc = "Enable Mirostat sampling for controlling perplexity. (default: 0, 0 = disabled, 1 = Mirostat, 2 = Mirostat 2.0)\n\nshortcut: `M`",
         default = 0,
         increment = 1,
         min = 0,
@@ -30,7 +30,7 @@ local map = {
     },
     {
         param = "num_ctx",
-        desc = "Sets the size of the context window used to generate the next token.",
+        desc = "Sets the size of the context window used to generate the next token.\n\nshortcut: `x`",
         default = 2048,
         increment = 512,
         min = 512,
@@ -44,7 +44,7 @@ local map = {
     },
     {
         param = "num_gpu",
-        desc = "The number of layers to send to the GPU(s). On macOS it defaults to 1 to enable metal support, 0 to disable.",
+        desc = "The number of layers to send to the GPU(s). On macOS it defaults to 1 to enable metal support, 0 to disable.\n\nshortcut: `gn`",
         default = 50,
         min = 0,
         increment = 4,
@@ -58,28 +58,28 @@ local map = {
     },
     {
         param = "repeat_last_n",
-        desc = "Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)",
+        desc = "Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)\n\nshortcut: `rn`",
         default = 64,
         increment = 4,
         min = 0,
     },
     {
         param = "repeat_penalty",
-        desc = "Sets how strongly to penalize repetitions. A higher value (e.g., 1.5) will penalize repetitions more strongly, while a lower value (e.g., 0.9) will be more lenient.",
+        desc = "Sets how strongly to penalize repetitions. A higher value (e.g., 1.5) will penalize repetitions more strongly, while a lower value (e.g., 0.9) will be more lenient.\n\nshortcut: `rp`",
         default = 1.1,
         increment = 0.1,
         min = 0,
     },
     {
         param = "temperature",
-        desc = "The temperature of the model. Increasing the temperature will make the model answer more creatively.",
+        desc = "The temperature of the model. Increasing the temperature will make the model answer more creatively.\n\nshortcut: `T`",
         default = 0.8,
         increment = 0.1,
         min = 0,
     },
     {
         param = "seed",
-        desc = "Sets the random number seed to use for generation. Setting this to a specific number will make the model generate the same text for the same prompt.",
+        desc = "Sets the random number seed to use for generation. Setting this to a specific number will make the model generate the same text for the same prompt.\n\nshortcut: `s`",
         default = 0,
         increment = 1,
         min = 0,
@@ -91,33 +91,41 @@ local map = {
     -- },
     {
         param = "tfs_z",
-        desc = "Tail free sampling is used to reduce the impact of less probable tokens from the output. A higher value (e.g., 2.0) will reduce the impact more, while a value of 1.0 disables this setting.",
+        desc = "Tail free sampling is used to reduce the impact of less probable tokens from the output. A higher value (e.g., 2.0) will reduce the impact more, while a value of 1.0 disables this setting.\n\nshortcut: `tz`",
         default = 1,
         increment = 0.1,
         min = 0,
     },
     {
         param = "num_predict",
-        desc = "Maximum number of tokens to predict when generating text. (Default: 128, -1 = infinite generation, -2 = fill context)",
+        desc = "Maximum number of tokens to predict when generating text. (Default: 128, -1 = infinite generation, -2 = fill context)\n\nshortcut: `gp`",
         default = 128,
         increment = 1,
         min = -2,
     },
     {
         param = "top_k",
-        desc = "Reduces the probability of generating nonsense. A higher value (e.g. 100) will give more diverse answers, while a lower value (e.g. 10) will be more conservative. (Default: 40)",
+        desc = "Reduces the probability of generating nonsense. A higher value (e.g. 100) will give more diverse answers, while a lower value (e.g. 10) will be more conservative. (Default: 40)\n\nshortcut: `tk`",
         default = 40,
         increment = 5,
         min = 0,
     },
     {
         param = "top_p",
-        desc = "Works together with top-k. A higher value (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. (Default: 0.9)",
+        desc = "Works together with top-k. A higher value (e.g., 0.95) will lead to more diverse text, while a lower value (e.g., 0.5) will generate more focused and conservative text. (Default: 0.9)\n\nshortcut: `tp`",
         default = 0.9,
         increment = 0.05,
         min = 0,
     },
 }
+
+local addons = [[
+
+
+<Tab>   switch to `prompt`
+  `S`     switch to `system prompt`
+  [q]     close layout
+]]
 
 SettingsManager = {}
 SettingsManager.__index = SettingsManager
@@ -226,9 +234,13 @@ end
 
 function SettingsManager:update_description()
     local index = self:get_setting_index_at_cursor()
-    vim.api.nvim_buf_set_lines(self.description_popup.bufnr, 0, -1, false, {
-        map[index].desc,
-    })
+    vim.api.nvim_buf_set_lines(
+        self.description_popup.bufnr,
+        0,
+        -1,
+        false,
+        vim.split(map[index].desc .. addons, "\n")
+    )
 end
 
 return SettingsManager
