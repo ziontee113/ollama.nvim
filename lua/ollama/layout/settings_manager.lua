@@ -239,7 +239,7 @@ function SettingsManager:update_description()
         0,
         -1,
         false,
-        vim.split(map[index].desc .. addons, "\n")
+        vim.split(string.format("**%s**\n\n", map[index].param) .. map[index].desc .. addons, "\n")
     )
 end
 
