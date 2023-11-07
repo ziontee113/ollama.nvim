@@ -234,6 +234,12 @@ function OllamaLayout:_map_shared_keys()
     self:smap("n", "tz", function() self.settings_manager:go_to_param("tfs_z") end, {})
     self:smap("n", "tp", function() self.settings_manager:go_to_param("top_p") end, {})
     self:smap("n", "tk", function() self.settings_manager:go_to_param("top_k") end, {})
+    self:smap(
+        "n",
+        "gn",
+        function() self.settings_manager:go_to_param("num_gpu") end,
+        { nowait = true }
+    )
 
     self:smap("n", "S", function() self:switch_to_system_prompt_popup() end, {})
 end

@@ -35,21 +35,27 @@ local map = {
         increment = 512,
         min = 512,
     },
-    -- {
-    --     param = "num_gqa",
-    --     desc = "The number of GQA groups in the transformer layer. Required for some models, for example it is 8 for llama2:70b.",
-    --     default = 1,
-    -- },
-    -- {
-    --     param = "num_gpu",
-    --     desc = "The number of layers to send to the GPU(s). On macOS it defaults to 1 to enable metal support, 0 to disable.",
-    --     default = 50,
-    -- },
-    -- {
-    --     param = "num_thread",
-    --     desc = "Sets the number of threads to use during computation. By default, Ollama will detect this for optimal performance. It is recommended to set this value to the number of physical CPU cores your system has (as opposed to the logical number of cores).",
-    --     default = 8,
-    -- },
+    {
+        param = "num_gqa",
+        desc = "The number of GQA groups in the transformer layer. Required for some models, for example it is 8 for llama2:70b.",
+        default = 1,
+        min = 0,
+        increment = 1,
+    },
+    {
+        param = "num_gpu",
+        desc = "The number of layers to send to the GPU(s). On macOS it defaults to 1 to enable metal support, 0 to disable.",
+        default = 50,
+        min = 0,
+        increment = 4,
+    },
+    {
+        param = "num_thread",
+        desc = "Sets the number of threads to use during computation. By default, Ollama will detect this for optimal performance. It is recommended to set this value to the number of physical CPU cores your system has (as opposed to the logical number of cores).",
+        default = 8,
+        min = 0,
+        increment = 1,
+    },
     {
         param = "repeat_last_n",
         desc = "Sets how far back for the model to look back to prevent repetition. (Default: 64, 0 = disabled, -1 = num_ctx)",
