@@ -122,8 +122,9 @@ local map = {
 local addons = [[
 
 
-<Tab>   switch to `prompt`
-  `S`     switch to `system prompt`
+  `d`   default value
+<Tab>   `prompt`
+  `S`     `system prompt`
   [q]     close layout
 ]]
 
