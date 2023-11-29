@@ -7,6 +7,17 @@ local SettingsManager = require("ollama.layout.settings_manager")
 local description_autocmds = require("ollama.layout.description_autocmds")
 local lib_buf = require("ollama.lib.buffer")
 
+------- read config from JSON -------
+
+local file_path = vim.fn.expand("~") .. "/.config/ollama_nvim_config.json"
+
+local read_config_from_json = function()
+    local lines = vim.fn.readfile(file_path)
+    local file_contents = table.concat(lines, "\n")
+    local config = vim.json.decode(file_contents)
+    return config
+end
+
 -- refactor later --
 
 local active_layout = "default"
@@ -39,6 +50,8 @@ function OllamaLayout.new()
     local layout, prompt_popup, result_popup, settings_popup, description_popup, system_prompt_popup =
         layout_create.create_default_layout()
 
+    instance.config = read_config_from_json()
+
     instance.layout = layout
     instance.system_prompt_popup = system_prompt_popup
     instance.prompt_popup = prompt_popup
@@ -48,7 +61,7 @@ function OllamaLayout.new()
 
     instance.last_active_popup = prompt_popup
 
-    instance.model = "zephyr"
+    instance.model = instance.config.model or "codellama"
     instance.ollama_port = 11434
     instance.ollama_url = string.format("http://localhost:%s/api/generate", instance.ollama_port)
     instance.ollama_models_url = string.format("http://localhost:%s/api/tags", instance.ollama_port)
@@ -95,6 +108,12 @@ end
 
 -- generation job --
 
+local write_config_to_file = function(parameters)
+    local config_tbl = { model = parameters.model, options = parameters.options }
+    local json_str = vim.json.encode(config_tbl)
+    vim.fn.writefile(vim.split(json_str, "\n"), file_path)
+end
+
 function OllamaLayout:_get_system_prompt()
     local system_prompt_popup_lines =
         vim.api.nvim_buf_get_lines(self.system_prompt_popup.bufnr, 0, -1, false)
@@ -115,6 +134,8 @@ function OllamaLayout:_create_generation_job(prompt, system_prompt)
         options = options,
         system = system_prompt,
     }
+
+    write_config_to_file(parameters)
 
     local pending_json_string = ""
 
@@ -298,7 +319,8 @@ function OllamaLayout:mount()
     vim.api.nvim_set_current_win(self.prompt_popup.winid)
     vim.cmd("startinsert")
 
-    self.settings_manager = SettingsManager.new(self.settings_popup, self.description_popup)
+    self.settings_manager =
+        SettingsManager.new(self.settings_popup, self.description_popup, self.config)
     self.settings_manager:init()
 end
 

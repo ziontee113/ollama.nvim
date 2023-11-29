@@ -131,10 +131,11 @@ local addons = [[
 SettingsManager = {}
 SettingsManager.__index = SettingsManager
 
-function SettingsManager.new(settings_popup, description_popup)
+function SettingsManager.new(settings_popup, description_popup, config)
     local instance = setmetatable({}, SettingsManager)
     instance.settings_popup = settings_popup
     instance.description_popup = description_popup
+    instance.config = config
     return instance
 end
 
@@ -157,8 +158,19 @@ function SettingsManager:init()
 
         map[i].line = j
         map[i].value = map[i].default
+        local is_default_value = true
+
+        if self.config.options and self.config.options[tbl.param] then
+            map[i].value = self.config.options[tbl.param]
+            is_default_value = false
+        end
         map[i].extmark = vim.api.nvim_buf_set_extmark(self.settings_popup.bufnr, ns, j, 0, {
-            virt_text = { { tostring(tbl.default), "GruvboxBlueSign" } },
+            virt_text = {
+                {
+                    tostring(tbl.value),
+                    is_default_value and "GruvboxBlueSign" or "GruvboxOrangeSign",
+                },
+            },
             virt_text_pos = "right_align",
         })
 
